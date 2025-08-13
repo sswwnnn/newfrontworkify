@@ -56,7 +56,7 @@ const EmployeeUpdateModal = ({ isOpen, onClose, employee, onUpdateEmployee }) =>
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
+    
     if (employee) {
       setFormData({
         employeeNumber: employee.employeeNumber || "",
