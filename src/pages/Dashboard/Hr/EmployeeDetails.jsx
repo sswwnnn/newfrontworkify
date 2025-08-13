@@ -10,7 +10,6 @@ function EmployeeDetails({ employee, onClose, onSectionUpdate, currentUser }) {
   const [activeEditModal, setActiveEditModal] = useState(null);
   const [currentEmployee, setCurrentEmployee] = useState(employee);
 
-  // Update local state when employee prop changes
   useEffect(() => {
     setCurrentEmployee(employee);
   }, [employee]);
@@ -32,7 +31,7 @@ function EmployeeDetails({ employee, onClose, onSectionUpdate, currentUser }) {
 
   // Handle updates from the main employee update modal (for left panel data)
   const handleEmployeeUpdate = (employeeId, data) => {
-    // Update local state immediately for UI responsiveness
+    
     setCurrentEmployee(prev => ({
       ...prev,
       ...data
