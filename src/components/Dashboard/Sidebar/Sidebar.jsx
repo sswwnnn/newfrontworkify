@@ -9,6 +9,7 @@ import {
   FaUser,
   FaUserAlt,
   FaSignOutAlt,
+  FaBuilding,
 } from "react-icons/fa";
 import { RxDashboard } from "react-icons/rx";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -77,6 +78,15 @@ const Sidebar = () => {
                   className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
                 >
                   <FaUserAlt className="nav-icon" /> <span>Employee List</span>
+                </NavLink>
+              </li>
+
+              <li>
+                <NavLink 
+                  to="/dashboard/department" 
+                  className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+                >
+                  <FaBuilding className="nav-icon" /> <span>Departments</span>
                 </NavLink>
               </li>
 
