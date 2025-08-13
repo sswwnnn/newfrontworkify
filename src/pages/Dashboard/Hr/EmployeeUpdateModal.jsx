@@ -48,7 +48,7 @@ const EmployeeUpdateModal = ({ isOpen, onClose, employee, onUpdateEmployee }) =>
   const handleSubmit = (e) => {
     e.preventDefault();
     if (employee) {
-      // Don't include currentRole in the update data since it's not editable
+      
       const { currentRole, ...updateData } = formData;
       onUpdateEmployee(employee._id, updateData);
     }
