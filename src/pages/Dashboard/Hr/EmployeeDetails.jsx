@@ -17,7 +17,7 @@ function EmployeeDetails({ employee, onClose, onSectionUpdate, currentUser }) {
   const isAdmin = currentUser && currentUser.role === 'Admin';
 
   const handleSectionUpdate = (employeeId, section, data) => {
-    // Update local state immediately for UI responsiveness
+    
     setCurrentEmployee(prev => ({
       ...prev,
       ...data
@@ -29,7 +29,7 @@ function EmployeeDetails({ employee, onClose, onSectionUpdate, currentUser }) {
     setActiveEditModal(null);
   };
 
-  // Handle updates from the main employee update modal (for left panel data)
+  
   const handleEmployeeUpdate = (employeeId, data) => {
     
     setCurrentEmployee(prev => ({
