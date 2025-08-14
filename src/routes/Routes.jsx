@@ -10,6 +10,7 @@ import WorkSheet from "../pages/Dashboard/Employee/WorkSheet";
 import EmployeeDetails from "../pages/Dashboard/Hr/EmployeeDetails";
 import EmployeeList from "../pages/Dashboard/Hr/EmployeeList";
 import Progress from "../pages/Dashboard/Hr/Progress";
+import DepartmentList from "../pages/Dashboard/Hr/DepartmentList"; // Add this import
 import Profile from "../pages/Dashboard/Profile/Profile";
 import ErrorPage from "../pages/ErrorPage";
 import Home from "../pages/Home/Home";
@@ -97,6 +98,14 @@ const router = createBrowserRouter([
         element: (
           <HrRoute>
             <EmployeeList />
+          </HrRoute>
+        ),
+      },
+      {
+        path: "department",
+        element: (
+          <HrRoute>
+            <DepartmentList />
           </HrRoute>
         ),
       },
