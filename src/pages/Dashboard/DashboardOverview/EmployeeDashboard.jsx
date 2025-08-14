@@ -9,7 +9,7 @@ import './EmployeeDashboard.css';
 
 const EmployeeDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedTimeframe, setSelectedTimeframe] = useState('');
   const [showClockModal, setShowClockModal] = useState(false);
   const [clockType, setClockType] = useState('in');
   const [clockInTime, setClockInTime] = useState(null);
@@ -17,7 +17,7 @@ const EmployeeDashboard = () => {
   const [currentStatus, setCurrentStatus] = useState('Clocked Out');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const departments = ['Compliance', 'Marketing', 'Sales'];
+  const timeframes = ['This Week', 'This Month'];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -80,13 +80,13 @@ const EmployeeDashboard = () => {
     return (diff / (1000 * 60 * 60)).toFixed(2);
   };
 
-  const handleDepartmentSelect = (department) => {
-    setSelectedDepartment(department);
+  const handleTimeframeSelect = (timeframe) => {
+    setSelectedTimeframe(timeframe);
     setShowFilterDropdown(false);
   };
 
   const handleClearFilters = () => {
-    setSelectedDepartment('');
+    setSelectedTimeframe('');
     setShowFilterDropdown(false);
   };
 
@@ -104,17 +104,17 @@ const EmployeeDashboard = () => {
           {showFilterDropdown && (
             <div className="filter-dropdown show">
               <div className="filter-section">
-                <div className="filter-section-title">Department</div>
-                {departments.map((department) => (
+                <div className="filter-section-title">Timeframes</div>
+                {timeframes.map((timeframe) => (
                   <div 
-                    key={department}
-                    className={`filter-option ${selectedDepartment === department ? 'selected' : ''}`}
+                    key={timeframe}
+                    className={`filter-option ${selectedTimeframe === timeframe ? 'selected' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDepartmentSelect(department);
+                      handleTimeframeSelect(timeframe);
                     }}
                   >
-                    {department}
+                    {timeframe}
                   </div>
                 ))}
               </div>
