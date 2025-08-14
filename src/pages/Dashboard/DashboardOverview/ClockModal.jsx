@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Calendar, CheckCircle } from 'lucide-react';
 import './ClockModal.css';
 
@@ -16,6 +16,7 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
   const [confirmedDate, setConfirmedDate] = useState('');
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [stream, setStream] = useState(null);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   
   const videoRef = React.useRef(null);
   const canvasRef = React.useRef(null);
@@ -37,11 +38,19 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
       setLocationError('');
       setIsCameraActive(false);
       setShowConfirmation(false);
+      setIsVideoReady(false);
       stopCamera();
     } else {
       stopCamera();
     }
   }, [isOpen]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
 
   const getUserLocation = () => {
     setIsLoadingLocation(true);
@@ -94,9 +103,100 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
     }
   };
 
-  const startCamera = async () => {
+  const stopCamera = useCallback(() => {
+    console.log('Stopping camera...');
+    
+    if (stream) {
+      console.log('Stopping all tracks...');
+      stream.getTracks().forEach(track => {
+        console.log('Stopping track:', track);
+        track.stop();
+      });
+      setStream(null);
+    }
+    
+    if (videoRef.current) {
+      console.log('Clearing video srcObject...');
+      videoRef.current.srcObject = null;
+    }
+    
+    setIsCameraActive(false);
+    setIsVideoReady(false);
+  }, [stream]);
+
+  const waitForVideoElement = useCallback(async (maxAttempts = 20) => {
+    for (let i = 0; i < maxAttempts; i++) {
+      if (videoRef.current && videoRef.current.parentNode) {
+        console.log(`Video element found after ${i + 1} attempts`);
+        return videoRef.current;
+      }
+      console.log(`Waiting for video element... attempt ${i + 1}/${maxAttempts}`);
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error('Video element not found after maximum attempts');
+  }, []);
+
+  const setupVideoStream = useCallback(async (mediaStream) => {
     try {
+      console.log('Waiting for video element...');
+      const videoElement = await waitForVideoElement();
+      
+      console.log('Video element found, setting up stream...');
+      
+     
+      if (videoElement.srcObject) {
+        videoElement.srcObject = null;
+      }
+      
+    
+      videoElement.srcObject = mediaStream;
+      
+      
+      videoElement.setAttribute('playsinline', '');
+      videoElement.setAttribute('muted', '');
+      videoElement.muted = true;
+      videoElement.autoplay = true;
+      
+     
+      const onLoadedMetadata = () => {
+        console.log('Video metadata loaded');
+        setIsVideoReady(true);
+        videoElement.removeEventListener('loadedmetadata', onLoadedMetadata);
+      };
+      
+      videoElement.addEventListener('loadedmetadata', onLoadedMetadata);
+      
+      
+      try {
+        const playPromise = videoElement.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          console.log('Video playing successfully');
+        }
+      } catch (playError) {
+        console.error('Play failed:', playError);
+       
+        console.log('Video play failed, but stream should still be visible');
+      }
+      
+    } catch (error) {
+      console.error('Error setting up video stream:', error);
+      throw error;
+    }
+  }, [waitForVideoElement]);
+
+  const startCamera = async () => {
+    console.log('Starting camera...');
+    
+    try {
+  
       stopCamera();
+      
+     
+      setIsCameraActive(true);
+      setIsVideoReady(false);
+      
+      console.log('Requesting camera permissions...');
       
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
@@ -107,27 +207,36 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
         audio: false
       });
       
+      console.log('Camera permission granted, got stream:', mediaStream);
       setStream(mediaStream);
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().then(() => {
-            setIsCameraActive(true);
-          }).catch(error => {
-            console.error('Error playing video:', error);
-          });
-        };
-      }
+   
+      setTimeout(async () => {
+        try {
+          await setupVideoStream(mediaStream);
+        } catch (setupError) {
+          console.error('Failed to setup video stream:', setupError);
+         
+          mediaStream.getTracks().forEach(track => track.stop());
+          setIsCameraActive(false);
+          setStream(null);
+          alert('Failed to setup camera. Please try again.');
+        }
+      }, 100);
+      
     } catch (error) {
       console.error('Error accessing camera:', error);
+      setIsCameraActive(false);
+      setStream(null);
+      
       let errorMessage = 'Could not access camera. ';
       
       if (error.name === 'NotAllowedError') {
         errorMessage += 'Please allow camera access and try again.';
       } else if (error.name === 'NotFoundError') {
         errorMessage += 'No camera found on this device.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage += 'Camera is already in use by another application.';
       } else {
         errorMessage += 'Please check permissions and try again.';
       }
@@ -136,21 +245,8 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
     }
   };
 
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => {
-        track.stop();
-      });
-      setStream(null);
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsCameraActive(false);
-  };
-
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current && videoRef.current.videoWidth > 0) {
+    if (videoRef.current && canvasRef.current && isVideoReady && videoRef.current.videoWidth > 0) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
       const context = canvas.getContext('2d');
@@ -158,6 +254,7 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
+ 
       context.scale(-1, 1);
       context.drawImage(video, -canvas.width, 0);
       context.scale(-1, 1); 
@@ -167,6 +264,13 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
       setUploadedImage(null);
       stopCamera();
     } else {
+      console.error('Camera not ready:', {
+        videoRef: !!videoRef.current,
+        canvasRef: !!canvasRef.current,
+        isVideoReady,
+        videoWidth: videoRef.current?.videoWidth,
+        videoHeight: videoRef.current?.videoHeight
+      });
       alert('Camera not ready. Please wait a moment and try again.');
     }
   };
@@ -341,6 +445,7 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
                     height="100%"
                     frameBorder="0"
                     className="map-iframe"
+                    title="Location Map"
                   ></iframe>
                 </div>
                 <p className="success-text">✓ Location captured successfully</p>
@@ -404,12 +509,18 @@ const ClockModal = ({ isOpen, onClose, clockType, onClockSuccess }) => {
                     muted
                     className="camera-video"
                   />
+                  {!isVideoReady && (
+                    <div className="camera-loading">
+                      <p>Starting camera...</p>
+                    </div>
+                  )}
                   <div className="photo-buttons">
                     <button
                       onClick={capturePhoto}
                       className="button-success"
+                      disabled={!isVideoReady}
                     >
-                      Capture Photo
+                      {isVideoReady ? 'Capture Photo' : 'Preparing...'}
                     </button>
                     <button
                       onClick={stopCamera}
