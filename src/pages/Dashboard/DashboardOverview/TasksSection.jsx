@@ -4,7 +4,7 @@ import './TasksSection.css';
 
 const TasksSection = () => {
   const tasks = [
-    { id: 1, title: 'Make work certificate with Regine Hambiol', date: '30/06/2023', progress: 60, status: 'In progress' },
+    { id: 1, title: 'Make work certificate', date: '30/06/2023', progress: 60, status: 'In progress' },
     { id: 2, title: 'Call Ezekiel Olasiman', date: '3 June 2023 at 10:30 am', completed: true },
     { id: 3, title: 'Interview preparation', date: '5 June 2023', priority: 'high' }
   ];
